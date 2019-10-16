@@ -49,23 +49,35 @@ extension VVPlayerView: VVNetMonitor {
     
     func netChanged(_ state: NetEnvironment) {
         print("网络= \(state)")
+        if state == .celluar {
+            coverView.showNetException(.celluar)
+            player.pause()
+        }
     }
     
 }
 
+// MARK: 加载错误 UI Action
 extension VVPlayerView: VVPlayerLoadAction {
     
-    func reload(_ errorView: VVLoadErrorView) {
+   
+    func reload(_ coverView: VVPlayerCoverView) {
+        
+        if let resouce = player.currentResource {
+            player.exchange(resouce)
+            coverView.showLoading()
+        }
+    }
+    
+    func celluarPlay(_ coverView: VVPlayerCoverView) {
+        
+        player.play()
+    }
+    
+    func celluarStop(_ coverView: VVPlayerCoverView) {
         
     }
     
-    func celluarPlay(_ netView: VVNetErrorView) {
-        
-    }
-    
-    func celluarStop(_ netView: VVNetErrorView) {
-        
-    }
 }
 
 

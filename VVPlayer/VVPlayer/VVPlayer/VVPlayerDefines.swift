@@ -35,10 +35,12 @@ enum VVPLayerLoadState: String {
 @objc protocol VVPlayerProtocol {
     
     func load(_ resourse: URL)
+    func exchange(_ resourse: URL)
     func play()
     func pause()
     func stop()
     func seekToTime(_ time: CMTime)
+
     
     // 屏幕相关
     @objc optional func landscapeLeft()

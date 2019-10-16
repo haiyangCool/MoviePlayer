@@ -21,15 +21,15 @@ private var LoadUIActionKey: Void?
 @objc protocol VVPlayerLoadAction: NSObjectProtocol {
     
     /// 加载错误、重新加载
-    @objc optional func reload(_ errorView: VVLoadErrorView)
+    @objc optional func reload(_ coverView: VVPlayerCoverView)
     
     /// 使用流量播放
     /// - Parameter netView:
-    @objc optional func celluarPlay(_ netView: VVNetErrorView)
+    @objc optional func celluarPlay(_ coverView: VVPlayerCoverView)
     
     /// 停止流量播放
     /// - Parameter netView:
-    @objc optional func celluarStop(_ netView: VVNetErrorView)
+    @objc optional func celluarStop(_ coverView: VVPlayerCoverView)
 }
 
 extension VVPlayerCoverView {
@@ -99,6 +99,7 @@ extension VVPlayerCoverView {
     func addNetExceptionView() {
         
         netErrorView = VVNetErrorView(frame: bounds)
+        netErrorView.delegate = self
         addSubview(netErrorView)
     }
     
@@ -123,13 +124,35 @@ extension VVPlayerCoverView {
         }
     }
 }
-// MARK: UI 操作事件
+
+// MARK: 加载失败View UI 操作事件
 extension VVPlayerCoverView: VVLoadError {
     
     @objc func reload() {
         if let delegate = loadAction, delegate.responds(to: #selector(delegate.reload(_:))) {
-            delegate.reload?(loadErrorView)
+            delegate.reload?(self)
         }
+    }
+}
+
+// MARK: 网络错误View  UI操作
+extension VVPlayerCoverView: VVNetErrorAction {
+    
+    func keepPlay(_ netView: VVNetErrorView) {
+        
+        guard let delegate = loadAction, delegate.responds(to: #selector(delegate.celluarPlay(_:))) else { return }
+        delegate.celluarPlay?(self)
+    }
+    
+    func stopPlay(_ netView: VVNetErrorView) {
+        
+        guard let delegate = loadAction, delegate.responds(to: #selector(delegate.celluarStop(_:))) else { return }
+        delegate.celluarStop?(self)
+    }
+    
+    func refresh(_ netView: VVNetErrorView) {
+        guard let delegate = loadAction, delegate.responds(to: #selector(delegate.reload(_:))) else { return }
+        delegate.reload?(self)
     }
 }
 
@@ -328,6 +351,13 @@ private let NetErrorBtnWidth: CGFloat = 100
 private let NetErrorBtnHeight: CGFloat = 30
 private let NetErrorPadding: CGFloat = 10
 
+@objc protocol VVNetErrorAction: NSObjectProtocol {
+    
+    @objc optional func refresh(_ netView: VVNetErrorView)
+    @objc optional func keepPlay(_ netView: VVNetErrorView)
+    @objc optional func stopPlay(_ netView: VVNetErrorView)
+}
+
 enum NetErrorType {
     // 网络断开
     case loseNet
@@ -337,33 +367,36 @@ enum NetErrorType {
 
 class VVNetErrorView: UIView {
     
+    weak var delegate: VVNetErrorAction?
     // 流量
     lazy var celluarContentView = UIView()
     lazy var errorLabel: UILabel = {
-           let errorLabel = UILabel()
-           errorLabel.textColor = .white
-           errorLabel.textAlignment = .center
-           errorLabel.font =  NetErrorMsgFont
-           errorLabel.text = NetErrorCelluarMsg
-           return errorLabel
+        let errorLabel = UILabel()
+        errorLabel.textColor = .white
+        errorLabel.textAlignment = .center
+        errorLabel.font =  NetErrorMsgFont
+        errorLabel.text = NetErrorCelluarMsg
+        return errorLabel
     }()
     
     lazy var stopBtn: UIButton = {
-          let stopBtn = UIButton()
-          stopBtn.backgroundColor = .blue
-          stopBtn.layer.cornerRadius = 5
-          stopBtn.titleLabel?.font = NetErrorMsgFont
-          stopBtn.setTitle(NetErrorStopCelluarTitle, for: .normal)
-          return stopBtn
+        let stopBtn = UIButton()
+        stopBtn.backgroundColor = .blue
+        stopBtn.layer.cornerRadius = 5
+        stopBtn.titleLabel?.font = NetErrorMsgFont
+        stopBtn.setTitle(NetErrorStopCelluarTitle, for: .normal)
+        stopBtn.addTarget(self, action: #selector(stop(_:)), for: .touchUpInside)
+        return stopBtn
     }()
     
     lazy var keepBtn: UIButton = {
-         let keepBtn = UIButton()
-         keepBtn.backgroundColor = .blue
-         keepBtn.layer.cornerRadius = 5
-         keepBtn.titleLabel?.font = NetErrorMsgFont
-         keepBtn.setTitle(NetErrorKeepCelluarTitle, for: .normal)
-         return keepBtn
+        let keepBtn = UIButton()
+        keepBtn.backgroundColor = .blue
+        keepBtn.layer.cornerRadius = 5
+        keepBtn.titleLabel?.font = NetErrorMsgFont
+        keepBtn.setTitle(NetErrorKeepCelluarTitle, for: .normal)
+        keepBtn.addTarget(self, action: #selector(play(_:)), for: .touchUpInside)
+        return keepBtn
     }()
     
     // 无网络
@@ -384,6 +417,7 @@ class VVNetErrorView: UIView {
         refreshBtn.layer.cornerRadius = 5
         refreshBtn.titleLabel?.font = NetErrorMsgFont
         refreshBtn.setTitle(NetErrorRefreshTitle, for: .normal)
+        refreshBtn.addTarget(self, action: #selector(refresh(_:)), for: .touchUpInside)
         return refreshBtn
     }()
     
@@ -428,6 +462,29 @@ class VVNetErrorView: UIView {
     
 }
 
+// Target-Action
+extension VVNetErrorView {
+
+
+    @objc private func play(_ sender: UIButton) {
+        
+        guard let delegate = delegate, delegate.responds(to: #selector(delegate.keepPlay(_:))) else { return }
+        delegate.keepPlay?(self)
+    }
+    
+    @objc private func stop(_ sender: UIButton) {
+        
+        guard let delegate = delegate, delegate.responds(to: #selector(delegate.stopPlay(_:))) else { return }
+        delegate.stopPlay?(self)
+    }
+    
+    @objc private func refresh(_ sender: UIButton) {
+        
+        guard let delegate = delegate, delegate.responds(to: #selector(delegate.refresh(_:))) else { return }
+        delegate.refresh?(self)
+    }
+    
+}
 extension VVNetErrorView {
     
     private func layout() {

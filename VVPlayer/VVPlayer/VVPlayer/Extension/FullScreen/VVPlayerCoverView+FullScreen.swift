@@ -146,14 +146,4 @@ extension VVPlayerCoverView {
         }
     }
     
-    
-    fileprivate var fullScreenObservation: NSKeyValueObservation? {
-        get {
-            return objc_getAssociatedObject(self, &FullScreenObservationKey) as? NSKeyValueObservation
-        }
-        set {
-            objc_setAssociatedObject(self, &FullScreenObservationKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        }
-    }
-    
 }

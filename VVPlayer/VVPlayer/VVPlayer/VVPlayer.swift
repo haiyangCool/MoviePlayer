@@ -82,9 +82,9 @@ class VVPlayer: UIView {
     
     private lazy var playerLayer: AVPlayerLayer = {
         let playerLayer = AVPlayerLayer(player: self.player)
+        playerLayer.frame = self.initFrame
         return playerLayer
     }()
-    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -116,9 +116,10 @@ extension VVPlayer: VVPlayerProtocol {
                 switch state {
                 case .loaded:
                     self.layer.addSublayer(self.playerLayer)
-                    self.playerLayer.frame = self.initFrame
                     self.addPlayerItemObserver()
                     self.addPlayerItemNotification()
+                    self.addTimeObserver()
+
                     break
                 case .failed:
                     print("load faild")
@@ -134,6 +135,26 @@ extension VVPlayer: VVPlayerProtocol {
         }
     }
     
+    /// 切换播放源
+    /// - Parameter resourse:
+    func exchange(_ resourse: URL) {
+        removeNotifications()
+        removeObservers()
+        
+        let avAsset = AVAsset(url: resourse)
+        asset = avAsset
+
+        let avPlayerItem = AVPlayerItem(asset: asset)
+        playerItem = avPlayerItem
+
+        let avPlayer = AVPlayer(playerItem: playerItem)
+        player = avPlayer
+        
+        let avPlayerLayer = AVPlayerLayer(player: player)
+        playerLayer = avPlayerLayer
+        load(resourse)
+        initFrame = frame
+    }
     
     /// 播放
     func play() {
@@ -253,7 +274,6 @@ extension VVPlayer {
                 }
                 if autoPlay {
                     play()
-                    addTimeObserver()
                 }
                 break
             case .failed:

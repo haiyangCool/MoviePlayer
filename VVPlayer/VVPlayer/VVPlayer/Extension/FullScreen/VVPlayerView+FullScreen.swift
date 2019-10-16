@@ -75,14 +75,14 @@ extension VVPlayerView {
                 }
                 return
             }
-            
+            return
         }
+        self.isFullScreen = true
         let fullScreenFrame = fullScreenFrameForIPhone()
         UIView.animate(withDuration: 0.3, animations: {
             self.reLayoutPlayer(frame: fullScreenFrame)
             self.layer.transform = CATransform3DMakeRotation(.pi/2.0, 0, 0, 1)
         }) { (flag) in
-            self.isFullScreen = true
         }
     }
     
@@ -96,14 +96,14 @@ extension VVPlayerView {
                 }
                 return
             }
-
+            return
         }
+        self.isFullScreen = true
         let fullScreenFrame = fullScreenFrameForIPhone()
         UIView.animate(withDuration: 0.3, animations: {
             self.reLayoutPlayer(frame: fullScreenFrame)
             self.layer.transform = CATransform3DMakeRotation(-.pi/2.0, 0, 0, 1)
         }) { (flag) in
-            self.isFullScreen = true
         }
     }
     
@@ -112,11 +112,11 @@ extension VVPlayerView {
         if !isFullScreen {
             return
         }
+        self.isFullScreen = false
         UIView.animate(withDuration: 0.35, animations: {
             self.layer.transform = CATransform3DIdentity
             self.reLayoutPlayer(frame: self.initFrame)
         }) { (flag) in
-            self.isFullScreen = false
         }
     }
 
